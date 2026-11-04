@@ -1,0 +1,33 @@
+plugins { id 'com.android.application' }
+
+// The web app lives one folder up (the "workout app" folder). Copy it into the APK's assets at build time.
+def webRoot = rootProject.projectDir.parentFile
+def webOut = layout.buildDirectory.dir("generated/web")
+tasks.register('copyWebApp', Sync) {
+    from(webRoot) {
+        include 'index.html', 'app.js', 'styles.css', 'data.js', 'icon-192.png', 'img/**'
+    }
+    into webOut.map { it.dir('www') }
+}
+
+android {
+    namespace 'com.evan.workouts'
+    compileSdk 34
+    defaultConfig {
+        applicationId 'com.evan.workouts'
+        minSdk 24
+        targetSdk 34
+        versionCode 1
+        versionName '1.0'
+    }
+    sourceSets { main { assets.srcDirs += webOut } }
+    buildTypes {
+        release {
+            minifyEnabled false
+            // Signed with the debug key so it can be sideloaded without setting up a release key.
+            signingConfig signingConfigs.debug
+        }
+    }
+    compileOptions { sourceCompatibility JavaVersion.VERSION_17; targetCompatibility JavaVersion.VERSION_17 }
+}
+preBuild.dependsOn copyWebApp
